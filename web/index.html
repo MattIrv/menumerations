@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>menumerations</title>
+		<link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+		<link href="css/theme.css" rel="stylesheet">
+		<script src="js/jquery-2.1.0.min.js"></script>
+		<script type="text/javascript">
+			var first = true;
+			var list = "";
+			var step1 = true;
+			var step2 = false;
+			var recipe = "";
+			var startover = false;
+			var inspired = false;
+			function enterin(e) {
+				if (e == 13) {
+					if (step1) {
+						if (first) {
+							$("#ingreds3").text("Ingredients you have:;n;n" + document.getElementById("inText").value);
+							document.getElementById("ingreds3").innerHTML = document.getElementById("ingreds3").innerHTML.replace(/;n;n/g, "<br><br>");
+							//document.getElementById("ingreds3").textContent = "Ingredients you have:\n\n" + document.getElementById("inText").value;
+							list = document.getElementById("inText").value;
+							document.getElementById("or").innerHTML = "&nbsp;";
+							document.getElementById("submitter").textContent = "Find Recipe";
+							document.getElementById("submitter").style.display = "block";
+							document.getElementById("or1").style.display = "block";
+							first = false;
+						}
+						else {
+							document.getElementById("ingreds3").innerHTML += "<br>" + document.getElementById("inText").value.replace(/(<([^>]+)>)/ig,"");
+							list += "," + document.getElementById("inText").value;
+						}
+						document.getElementById("inText").value = "";
+					}
+					else {
+						submit();
+					}
+				}
+			}
+			function submit() {
+				//document.getElementById("centerBox").style.width="700px";
+				if (step1) {
+					$.get("http://localhost:5000/getrec/" + list,function(data,status){
+						listy = data.split(";;;");
+						stringy = "";
+						i = 0;
+						for (i=0; i<listy.length; i++) {
+							stringy = stringy + "<a href='#'" + " onclick='linky(" + "\"" + listy[i] + "\"" + ")'>" + listy[i] + "</a><br>"
+						}
+						 document.getElementById("ingreds2").innerHTML = "<h3>Matching Recipes:</h3><p>" + stringy + "</p>";
+  					});
+					document.getElementById("instructions").style.display = "none";
+					document.getElementById("instructions2").style.display = "inline";
+					document.getElementById("ingreds2").focus();
+					document.getElementById("inText2").style.display = "none";
+					step1 = false;
+				}
+				else if (!startover) {
+					document.getElementById("ingreds2").textContent = 
+							document.getElementById("ingreds3").textContent + "\n\n" + "Recipe: " 
+							+ document.getElementById("inText2").value;
+					recipe = document.getElementById("inText2").value;
+					document.getElementById("inText2").value = "Enter a Phone Number";
+					document.getElementById("submitter").textContent = "Start Over";
+					document.getElementById("inspire").display = "none";
+					document.getElementById("or1").display = "none";
+					startover = true;
+					shoppingList = " ";
+					
+  					document.getElementById("email").style.display = "block";
+  					els = document.getElementsByClassName("emailp")
+  					i = els.length;
+  					while (i--) {
+  						els[i].style.display = "inline";
+  					}
+				}
+				/*else if (!step2) {
+					
+					step2 = true;
+				}*/
+				else {
+					location.reload();
+				}
+			}
+			function linky(stringy) {
+				resultipe = "";
+				//stringy = stringy.replace(/$$$/g, " ");
+				document.getElementById("instructions").style.display = "none";
+				document.getElementById("inText2").value = "Enter a Phone Number";
+				document.getElementById("inText2").style.display = "inline";
+				document.getElementById("instructions2").style.display = "inline";
+				document.getElementById("submitter").textContent = "Start Over";
+				document.getElementById("ingreds2").textContent = "Loading...";
+				document.getElementById("submitter").style.display = "block";
+				document.getElementById("email").style.display = "block";
+  					els = document.getElementsByClassName("emailp")
+  					i = els.length;
+  					while (i--) {
+  						els[i].style.display = "inline";
+  					}
+				$.get("http://localhost:5000/nametorec/" + stringy,function(data,status){
+					 tempData = data.split(";;;;;;")[1].replace(/;;;/g, ",");
+					 list = tempData;
+					 data = data.replace(/;;;/g, "<br>");
+					 document.getElementById("ingreds2").innerHTML = "<h3>Recipe:</h3>" + 
+					 data + "</p><p>&nbsp;</p>";
+  				});
+  				step1 = false;
+  				startover = true;
+  				document.getElementById("inspire").style.display = "none";
+				document.getElementById("or1").style.display = "none";
+			}
+			function inspire() {
+				//document.getElementById("centerBox").style.width="700px";
+				if (inspired)
+					list = "";
+				/*if (list.startsWith(","))
+					list = list.replace(",","");*/
+				//if (list.substring(0, 1) == ",")
+				//	list = list.replace(",","");
+				resultipe = "";
+				document.getElementById("instructions").style.display = "none";
+				document.getElementById("inText2").value = "Enter a Phone Number";
+				document.getElementById("inText2").style.display = "inline";
+				document.getElementById("instructions2").style.display = "inline";
+				document.getElementById("submitter").textContent = "Start Over";
+				document.getElementById("ingreds2").textContent = "Loading...";
+				document.getElementById("or1").style.display = "block";
+				document.getElementById("submitter").style.display = "block";
+				document.getElementById("email").style.display = "block";
+  					els = document.getElementsByClassName("emailp")
+  					i = els.length;
+  					while (i--) {
+  						els[i].style.display = "inline";
+  					}
+				$.get("http://localhost:5000/generate/," + list,function(data,status){
+					 tempData = data.split(";;;;;;")[0].replace(/;;;/g, ",");
+					 list = tempData;
+					 data = data.replace(/;;;;;;/g, "<br><br>");
+					 data = data.replace(/;;;/g, "<br>");
+					 document.getElementById("ingreds2").innerHTML = "<h3>Recipe:</h3>" + 
+					 data + "</p><p>&nbsp;</p>";
+  				});
+  				inspired = true;
+  				step1 = false;
+  				startover = true;
+			}
+			function email() {
+				//if (inspired) {
+					$.get("http://localhost:5000/send/" + list + "&" + document.getElementById("inText2").value,function(data,status){
+						if (data == "Error: Text Unable To Send. Please Check number") {
+							document.getElementById("instructions2").innerHTML = 
+							document.getElementById("instructions2").innerHTML.replace("<h4>Text Message Failed</h4>", "") + "<h4>Text Message Failed</h4>";
+						}
+						else {
+							document.getElementById("instructions2").innerHTML = 
+							document.getElementById("instructions2").innerHTML.replace("<h4>Text Message Failed</h4>", "") + "<h4>Text Message Sent</h4>";
+							document.getElementById("inText2").style.display = "none";
+  							document.getElementById("email").style.display = "none";
+  							els = document.getElementsByClassName("emailp")
+  							i = els.length;
+  							list=","
+  							while (i--) {
+  								els[i].style.display = "none";
+  							}
+						}
+  					});
+					return;
+				//}
+				document.getElementById("inText2").display = "none";
+				$.get("http://localhost:5000/create/" + list + "&" + document.getElementById("inText2").value + "&" + recipe + "&1" ,function(data,status){
+						if (data == "Error: Text Unable To Send. Please Check number") {
+							document.getElementById("instructions2").innerHTML = "<h4>Text Message Failed</h4>";
+						}
+						else {
+							document.getElementById("instructions2").innerHTML = "<h4>Text Message Sent</h4>";
+						}
+  					});
+			}
+			function textText() {
+				if (document.getElementById("inText2").value = "Enter a Phone Number") {
+					document.getElementById("inText2").value = "";
+					document.getElementById("inText2").focus();
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<div id="header">
+			<h2>menumerations</h2>
+		</div>
+		<!--<div id="navbar">Home
+		</div>-->
+		<div id="content">
+			<div id="centerBox" class="centerBox">
+				<div class="contentBox">
+					<div class="instructions" id="instructions">
+						<h1>Welcome to menumerations!</h1>
+						<p id="ingreds3"  class="ingreds">Start Adding Ingredients</p>
+						<input type="text" id="inText" class="inText" value="" onkeydown="enterin(event.keyCode)" autofocus>
+						<p id="or">Or</p>
+					</div>
+					<div class="instructions" id="instructions2" style="display:none">
+						<p id="ingreds2" class="ingreds">Loading...</p>
+						<input type="text" id="inText2" class="inText" value="" onclick="textText()" onkeydown="enterin(event.keyCode)">
+						<p>&nbsp;</p>
+					</div>
+					<div class="recipeButton">
+						<p class="emailp"><button type="button" id="email" onclick="email()">Text Ingredients</button></p>
+						<p class="emailp" id="emailp" style="display:none;">Or</p>
+						<p class="emailp" style="display:none;"></p>
+						<p><button type="button" id="submitter" onclick="submit()">Generate</button></p>
+						<p id="or1" style="display:none;">Or</p>
+						<p><button type="button" id="inspire" onclick="inspire()">Get Inspired</button></p>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id="footer">
+		</div>
+	</body>
+</html>
